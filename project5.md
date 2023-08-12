@@ -41,3 +41,9 @@ Server A name - `mysql server`
 Server B name - `mysql client`
 
 
+2. On `mysql server` Linux Server install MySQL Server software.
+
+
+3. On `mysql client` Linux Server install MySQL Client software.
+
+
