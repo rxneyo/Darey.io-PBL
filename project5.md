@@ -47,3 +47,40 @@ Server B name - `mysql client`
 3. On `mysql client` Linux Server install MySQL Client software.
 
 
+![mysql client installed](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/ae81aa7d-a485-4f55-b826-7ff1ae43fa8d)
+
+
+
+4. By default, both of the EC2 virtual servers are located in the same local virtual network, so they can communicate to each other using local IP addresses. Next, we'll use mysql server's local IP address to connect from mysql client. MySQL server uses TCP port 3306 by default, so we will have to open it by creating a new entry in ‘Inbound rules’ in ‘mysql server’ Security Groups. For extra security, do not allow all IP addresses to reach your ‘mysql server’ – allow access only to the specific local IP address of your ‘mysql client’.
+
+
+5. Configure MySQL server to allow connections from remote hosts using the code below;
+
+   
+`sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf`
+
+
+Then replace ‘127.0.0.1’ to ‘0.0.0.0'
+
+
+6. From mysql client Linux Server connect remotely to mysql server Database Engine without using SSH. You must use the mysql utility to perform this action.
+
+
+![mysql client connected to mysql server](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/308c2640-b325-42b9-8456-701da8bdef79)
+
+
+7. To check that you have successfully connected to a remote MySQL server and can perform SQL queries:
+
+
+`Show databases;`
+
+
+![show databases](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/85049044-7be4-4bc9-b64a-370485f41f26)
+
+
+
+Congrats!
+
+![image](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/5eb22713-1ab8-4f4c-b90e-d4b5a4ca2d4e)
+
+
