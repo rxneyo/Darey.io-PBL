@@ -460,3 +460,16 @@ Open the website in your browser `http://<Web-Server-Public-IP-Address-or-Public
 
 ![image](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/3e5d8ff0-ac1b-4c07-bcf2-62103953fe14)
 
+
+Created a sign up process by adding user (myuser) credentials manually to the database
+
+![image](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/411bbc27-81b5-4a97-b97d-bd1bbf8f9e20)
+
+
+
+Log into newly created `myuser` by running <public_ip_address>/login.php. on the browser 
+
+![image](https://github.com/rxneyo/Darey.io-PBL/assets/125794122/dde7762c-6788-46ba-a85f-1aa9ab61f533)
+
+
+
