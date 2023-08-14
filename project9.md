@@ -246,3 +246,5 @@ To make sure that the files in /mnt/apps have been updated – connect via SSH/P
 
 
 If you see the changes you had previously made in your GitHub – the job works as expected.
+
+
