@@ -117,3 +117,132 @@ In this part, the goal is to learn how to configure a simple Jenkins job/project
 
 On the github repository that contains application code, create a webhook to connect to the jenkins job. To create webhook, go to the settings tab on the github repo and click on webhooks. Webhook should look like this
 
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/c71b8eb3-22db-4430-a4cd-161b87f3b1fd)
+
+
+2. Go to Jenkins web console, click “New Item” and create a “Freestyle project”
+
+On the jenkins server, create a new freestyle job
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/6772f260-756c-4709-bd32-2640c229b803)
+
+
+To connect your GitHub repository, you will need to provide its URL, you can copy from the repository itself
+
+In doing the above, choose Git repository, the provide the link to the GitHub tooling repository and credentials (username and password. This is to allow Jenkins to access files in the repository. Also specify the branch containing code; it could be main or master branch.
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/7c712d63-893e-4629-b68b-ba305fddf385)
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/f6bd4efa-b637-49aa-ad1d-93cca8ea8899)
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/60915207-0058-4a58-a3dd-b532124ce353)
+
+
+Save the configuration and let us try to run the build. For now we can only do it manually.
+
+
+Click “Build Now” button, if you have configured everything correctly, the build will be successfull and you will see it under #1
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/e8667897-a80d-4ec9-b1d3-e7cc05447277)
+
+**NB:** My Build 1 was wrong due to wrong branch specification. Correcting it made Build 2 successful as shown in the Console Output below:
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/15b40c9d-3eef-4a07-893e-fe7e01b92382)
+
+
+Also note that this build does not produce anything and it runs only when we trigger it manually. Let us fix it.
+
+
+3. Click “Configure” your job/project and add these two configurations
+
+   This is necessary to specify the particular trigger to use for triggering the job.
+
+   
+Configure triggering the job from GitHub webhook:
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/5b07c6f2-1401-4be8-9901-cdae50015ac8)
+
+Next is to configure “Post-build Actions” to archive all the files – files resulted from a build are called “artifacts”.
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/1abb84e4-bbd8-4212-ab61-403ba0cdc1dd)
+
+
+Now, we can go ahead to make some changes in any file in our GitHub repository (e.g. README.MD file) and push the changes to the master branch.
+
+You will see that a new build has been launched automatically (by webhook) and you can see its results – artifacts, saved on Jenkins server.
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/b4b71438-05c6-443b-9eed-d54dcbc761e8)
+
+
+The console output shows the created job and the successful build. In this case the code on Github was built into an artifact on our Jenkins server workspace. It is possible to find the artificat by checking the status tab of the completed job 
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/f2bf5990-4e58-4fc6-bb13-7b36f4a52577)
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/ab31180e-124a-4db8-918f-9109c475f5ac)
+
+
+Now we have configured an automated Jenkins job that receives files from GitHub by webhook trigger (this method is considered as ‘push’ because the changes are being ‘pushed’ and files transfer is initiated by GitHub). There are also other methods: trigger one job (downstreadm) from another (upstream), poll GitHub periodically and others.
+
+
+By default, the artifacts are stored on Jenkins server locally. Our created artifact can be found on our local terminal too at this path 
+
+`ls /var/lib/jenkins/jobs/tooling_github/builds/<build_number>/archive/`
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/660436e2-8340-42a5-a48f-92b96a8a9005)
+
+
+
+## CONFIGURE JENKINS TO COPY FILES TO NFS SERVER VIA SSH
+
+## Step 3 – Configure Jenkins to copy files to NFS server via SSH
+
+Now that we have our artifacts saved locally on Jenkins server, the next step is to copy them to our NFS server to `/mnt/apps` directory.
+
+Jenkins is a highly extendable application and there are 1400+ plugins available. We will need a plugin that is called “Publish Over SSH”. To achieve this, we install the Publish Via SSH pluging on Jenkins. The plugin allows one to send newly created packages to a remote server and install them, start and stop services that the build may depend on and many other use cases.
+
+1. Install “Publish Over SSH” plugin.
+
+
+On main dashboard select “Manage Jenkins” and choose “Manage Plugins” menu item.
+
+
+On “Available” tab search for “Publish Over SSH” plugin and install it 
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/33de7e69-d0b4-4871-94e2-56ee73a44f71)
+
+
+2. Configure the job to copy artifacts over to NFS server. On main dashboard select "Manage Jenkins" and choose "Configure System" menu item.
+
+Scroll down to Publish over SSH plugin configuration section and configure it to be able to connect to the NFS server:
+
+Provide a private key (content of .pem file that you use to connect to NFS server via SSH/Putty)
+
+Hostname – can be private IP address of NFS server
+Username – ec2-user (since NFS server is based on EC2 with RHEL 8)
+Remote directory – /mnt/apps since our Web Servers use it as a mointing point to retrieve files from the NFS server
+
+Test the configuration and make sure the connection returns Success. Remember, that TCP port 22 on NFS server must be open to receive SSH connections.
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/d1d67116-9263-496b-9dce-7fd7b174208c)
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/e617e1ff-0095-48b3-a166-a4debb98b7fb)
+
+
+Now make a new change on the tooling source code and push to github, Jenkins will build an artifact by downloading the code into its workspace based on the latest commit and via SSH it publishes the artifact into the NFS Server to update the source code.
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/50e1c06e-5f2c-4000-9574-f53634397c7c)
+
+
+To make sure that the files in /mnt/apps have been updated – connect via SSH/Putty to your NFS server and check README.MD file
+
+`cat /mnt/apps/README.md`
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/8326b5fa-1d3c-48c3-8613-1c7044377356)
+
+
+
+If you see the changes you had previously made in your GitHub – the job works as expected.
