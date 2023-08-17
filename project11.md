@@ -91,3 +91,188 @@ Tip: Every time you stop/start your Jenkins-Ansible server – you have to recon
 
 `git clone <ansible-config-mgt repo link>`
 
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/3eac5ac1-2a05-4b9c-b050-265febb47fb1)
+
+
+## BEGIN ANSIBLE DEVELOPMENT
+
+In your ansible-config-mgt GitHub repository, create a new branch that will be used for development of a new feature.
+
+`git checkout -b >projectname<`
+
+Tip: Give your branches descriptive and comprehensive names, for example, if you use Jira or Trello as a project management tool – include ticket number (e.g. PRJ-145) in the name of your branch and add a topic and a brief description what this branch is about – a bugfix, hotfix, feature, release (e.g. feature/prj-145-lvm)
+
+> Checkout the newly created feature branch to your local machine and start building your code and directory structure
+
+> Create a directory and name it playbooks – it will be used to store all your playbook files.
+
+ `mkdir playbooks` or use the add directory tool on vscode
+
+> Create a directory and name it inventory – it will be used to keep your hosts organised.
+
+`mkdir inventory`
+
+> Within the playbooks folder, create your first playbook, and name it common.yml
+
+> Within the inventory folder, create an inventory file (.yml) for each environment (Development, Staging Testing and Production) dev, staging, uat, and prod respectively.
+
+`cd inventory`
+
+`touch dev.yml staging.yml uat.yml prod.yml`
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/9704cae2-5d6d-4d86-99f5-d656cd080beb)
+
+
+## Step 4 – Set up an Ansible Inventory
+
+An Ansible inventory file defines the hosts and groups of hosts upon which commands, modules, and tasks in a playbook operate. Since our intention is to execute Linux commands on remote hosts, and ensure that it is the intended configuration on a particular server that occurs. It is important to have a way to organize our hosts in such an Inventory.
+
+Save below inventory structure in the `inventory/dev` file to start configuring your development servers. Ensure to replace the IP addresses according to your own setup.
+
+Note: Ansible uses TCP port 22 by default, which means it needs to ssh into target servers from Jenkins-Ansible host – for this you can implement the concept of ssh-agent. Now you need to import your key into ssh-agent:
+
+`eval `ssh-agent -s`
+
+`ssh-add <path-to-private-key>`
+
+Confirm the key has been added with the command below, you should see the name of your key
+
+`ssh-add -l`
+
+Now, ssh into your Jenkins-Ansible server using ssh-agent
+
+`ssh -A ubuntu@public-ip`
+
+Also notice, that your Load Balancer user is ubuntu and user for RHEL-based servers is ec2-user.
+
+Update your `inventory/dev.yml` file with this snippet of code:
+
+[nfs]
+
+`<NFS-Server-Private-IP-Address> ansible_ssh_user='ec2-user'`
+
+[webservers]
+
+`<Web-Server1-Private-IP-Address> ansible_ssh_user='ec2-user'`
+
+`<Web-Server2-Private-IP-Address> ansible_ssh_user='ec2-user'`
+
+[db]
+
+`<Database-Private-IP-Address> ansible_ssh_user='ec2-user'`
+
+[lb]
+
+`<Load-Balancer-Private-IP-Address> ansible_ssh_user='ubuntu'`
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/49b0af79-edad-4fc2-9b19-707af5beb448)
+
+
+
+## Step 5 – Create a Common Playbook
+
+It is time to start giving Ansible the instructions on what you needs to be performed on all servers listed in `inventory/dev`.
+
+In `common.yml` playbook you will write configuration for repeatable, re-usable, and multi-machine tasks that is common to systems within the infrastructure.
+
+Update your `playbooks/common.yml` file with following code:
+
+
+`---
+- name: update web, nfs and db servers
+  hosts: webservers, nfs, db
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  tasks:
+    - name: ensure wireshark is at the latest version
+      yum:
+        name: wireshark
+        state: latest
+
+- name: update LB server
+  hosts: lb
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  tasks:
+    - name: Update apt repo
+      apt: 
+        update_cache: yes
+
+    - name: ensure wireshark is at the latest version
+      apt:
+        name: wireshark
+        state: latest`
+
+
+Examine the code above and try to make sense out of it. This playbook is divided into two parts, each of them is intended to perform the same task: install wireshark utility (or make sure it is updated to the latest version) on your RHEL 8 and Ubuntu servers. It uses root user to perform this task and respective package manager: yum for RHEL 8 and apt for Ubuntu.
+
+Feel free to update this playbook with following tasks:
+
+> Create a directory and a file inside it
+
+> Change timezone on all servers
+
+> Run some shell script
+
+> …
+ 
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/2f14df93-d5c0-4575-829b-63f136c19f5b)
+
+
+
+## Step 6 – Update GIT with the latest code
+
+Now all of your directories and files live on your machine and you need to push changes made locally to GitHub.
+
+In the real world, you will be working within a team of other DevOps engineers and developers. It is important to learn how to collaborate with help of GIT. In many organisations there is a development rule that do not allow to deploy any code before it has been reviewed by an extra pair of eyes – it is also called "Four eyes principle".
+
+Now you have a separate branch, you will need to know how to raise a Pull Request (PR), get your branch peer reviewed and merged to the master branch.
+
+Commit your code into GitHub:
+
+1. Use git commands to add, commit and push your branch to GitHub.
+
+`git status`
+
+`git add <selected files>`
+
+`git commit -m "commit message"`
+
+
+2. Create a Pull request (PR)
+
+   ![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/e1a36f97-11c4-48ce-950d-0f1ca92d172d)
+
+   ![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/2f1880d3-e531-436f-83a8-320cb7bc2ca7)
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/383991ef-5d32-43c1-9c5b-fe155f24f9b0)
+
+
+
+4. Wear a hat of another developer for a second, and act as a reviewer.
+
+5. If the reviewer is happy with your new feature development, merge the code to the master branch.
+
+6. Head back on your terminal, checkout from the feature branch into the master, and pull down the latest changes.
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/77b96db0-efb5-4d6e-90f9-577ff6bf1571)
+
+
+Once your code changes appear in master branch – Jenkins will do its job and save all the files (build artifacts) to /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/ directory on Jenkins-Ansible server
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/3e693ebb-dda2-488d-9c79-0b7de2a85b6a)
+
+
+
+## Step 7 – Run first Ansible test
+
+Now, it is time to execute `ansible-playbook` command and verify if your playbook actually works:
+
+`cd ansible-config-mgt`
+
+`ansible-playbook -i inventory/dev.yml playbooks/common.yml`
+
+You can go to each of the servers and check if wireshark has been installed by running which wireshark or wireshark --version
+
+ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml
