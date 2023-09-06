@@ -246,6 +246,10 @@ a. Decide if you want to develop your own roles, or find available ones from the
 b. Update both `static-assignment` and `site.yml` files to refer the roles
 
 
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/ec49547c-bf38-4f60-9f83-38d875e59bb1)
+
+
+
 **Important Hints:**
 
 > Since you cannot use both **Nginx** and **Apache** load balancer, you need to add a condition to enable either one – this is where you can make use of variables.
