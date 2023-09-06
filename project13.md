@@ -294,6 +294,14 @@ The same must work with `apache` LB, so you can switch it by setting respective 
 
 To test this, you can update inventory for each environment and run Ansible against each environment.
 
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/c0b91e6b-e8b3-4664-83f9-42758690e2c2)
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/7533d08b-213c-44f7-bf0d-81cccc1e032c)
+
+
+
 Congratulations!
 
 You have learned and practiced how to use Ansible configuration management tool to prepare UAT environment for Tooling web solution.
