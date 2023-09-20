@@ -383,20 +383,90 @@ To make your new branch show up in Jenkins, we need to tell Jenkins to scan the 
  ## A QUICK TASK FOR YOU!
  
 1. Create a pull request to merge the latest code into the main branch
+
+   ![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/a5beec1d-d32b-467d-9743-177bee3ac8b7)
+
    
 2. After merging the PR, go back into your terminal and switch into the main branch.
 
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/bb61fb63-bede-48c2-b0d3-8b9e71b16bb3)
+
+
 3. Pull the latest change.
 
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/c58478d4-f525-4bb1-a50c-cd735587fe1c)
+
+
 4. Create a new branch, add more stages into the Jenkins file to simulate below phases. (Just add an echo command like we have in build and test stages)
- 
+
+ ![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/3fe22541-3bfb-4ad9-be27-b71f7dcaa51d)
+
+
    1. Package 
 
    2. Deploy 
 
    3. Clean up
+
+     ```python
+     pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    sh 'echo "Building Stage"'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    sh 'echo "Testing Stage"'
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                script {
+                    sh 'echo "Packaging Stage"'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    sh 'echo "Deploying Stage"'
+                }
+            }
+        }
+
+        stage('Clean up') {
+            steps {
+                script {
+                    sh 'echo "Cleaning up Stage"'
+                }
+            }
+        }
+    }
+}
+```
       
 
-6. Verify in Blue Ocean that all the stages are working, then merge your feature branch to the main branch
+5. Verify in Blue Ocean that all the stages are working, then merge your feature branch to the main branch
 
-7. Eventually, your main branch should have a successful pipeline like this in blue ocean
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/51ad5ee2-5f2d-4d2b-890d-170227d01fa4)
+
+
+6. Eventually, your main branch should have a successful pipeline like this in blue ocean
+
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/ba2f35fc-4f01-44e5-ae9e-dfaf40bf8f2c)
+
