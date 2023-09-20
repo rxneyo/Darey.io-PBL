@@ -171,3 +171,232 @@ To automate the setup of `SonarQube` and `JFROG` Artifactory, we can use `ansibl
 We will see this in play later
 
 
+## Configuring Ansible For Jenkins Deployment
+
+
+We create a Jenkins-server with a t2.medium specification because we will be needing more compute power to run builds compared to the jenkins-server we have been using in project 13
+
+Prepare your Jenkins server:
+
+Connect to your Jenkins instance on VScode via SSH and set up SSH-agent to ensure ansible get the private key required to connect to all other servers:
+
+`eval `ssh-agent -s`
+
+`ssh-add <path-to-private-key>`
+
+
+Install the following packages and dependencies on the server:
+
+
+1. Install git : `sudo yum install git` (using a rhel server)
+
+2. Clone down the Asible-config-mgt repository: git clone (https://github.com/rxneyo/ansible-config-mgt.git)
+
+3. Install Jenkins and its dependencies. Steps to install Jenkins can be found here:
+
+ Install Java:  `sudo yum install java-11-openjdk`
+
+ Enable the Jenkins repository on the server: `sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo`
+
+ Import the Jenkins RPM GPG key: `sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key`
+
+ Now install Jenkins: `sudo yum install jenkins`
+
+ Then start the Jenkins service: `sudo systemctl start jenkins`
+                                 `sudo systemctl enable jenkins`
+
+
+5. Configure Ansible For Jenkins Deployment: `http://your_server_ip_or_domain:8080`
+
+
+6. Navigate to Jenkins URL: :8080
+
+In the Jenkins dashboard, click on Manage Jenkins -> Manage plugins and search for Blue Ocean plugin. Install and open Blue Ocean plugin.
+
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/bd838a13-b319-4287-8899-696d03696c59)
+
+
+Create  new pipeline
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/3f4572f8-02df-47ba-bf89-7d0150601eb2)
+
+
+Select Github
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/7a57e0ad-99a7-48e9-be33-3fe65a6634b8)
+
+
+Connect Jenkins with Github
+
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/335b9343-f835-413f-a6ef-dde47a223be2)
+
+
+
+Get personal access token from github
+
+Copy access token
+
+Paste the token and connect
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/eb4e1e34-50c6-49b1-bae4-9077defc1011)
+
+
+Create a new pipeline
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/5c3bde6f-6370-446c-aaa3-d025abc73604)
+
+
+At this point you may not have a Jenkinsfile in the Ansible repository, so Blue Ocean will attempt to give you some guidance to create one. But we do not need that. We will rather create one ourselves. So, click on Administration to exit the Blue Ocean console.
+
+
+Here is our newly created pipeline. Note that this pipeline takes the name of your GitHub repository.
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/c1a49777-b4b4-4f2d-a3f3-85061dbd159d)
+
+
+This job gets created automatically by blue-ocean after connection with github repo.
+
+
+
+## Creating JENKINSFILE
+
+
+* In Vscode, inside the Ansible project, create a new directory and name it deploy, create a new file Jenkinsfile inside the directory.
+
+
+ ![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/6aac9cf9-3398-49e3-bcda-2eff597f9647)
+
+
+
+* Add the code snippet below to start building the `Jenkinsfile` gradually. This pipeline currently has just one stage called `Build` and the only thing we are doing is using the `shell script` module to echo `Building Stage`.
+
+  ```python
+  pipeline {
+    agent any
+
+  stages {
+    stage('Build') {
+      steps {
+        script {
+          sh 'echo "Building Stage"'
+        }
+      }
+    }
+    }
+}
+```
+
+Now go back into the Ansible pipeline in Jenkins, and select configure
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/e06e8698-85c7-4dae-9d87-69bfd2e8b9e4)
+
+
+Scroll down to `Build Configuration` section and specify the location of the Jenkinsfile at `deploy/Jenkinsfile`
+
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/c95e6aa4-bcdd-496e-b5bc-e522574835d1)
+
+Back to the pipeline again, this time click "Build now"
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/38762103-a639-4456-a116-0c23f44e982e)
+
+
+This will trigger a build and you will be able to see the effect of our basic Jenkinsfile configuration by going through the console output of the build.
+
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/ed01cc19-feca-46fb-852a-d0985c0fbba2)
+
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/85c56cb8-9f29-4c2b-ada2-7fde56d215ef)
+
+
+To really appreciate and feel the difference of Cloud Blue UI, it is recommended to try triggering the build again from Blue Ocean interface.
+
+1. Click on Open Blue Ocean
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/e0c8d9d4-6322-4bc4-a936-d6e93cd69e65)
+
+
+2. Select your project. Mine is `ansible-config-mgt`
+
+3. Click on the play button against the branch
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/c175ff66-4628-41e8-815f-41a60cad667f)
+
+
+Notice that this pipeline is a multibranch one. This means, if there were more than one branch in GitHub, Jenkins would have scanned the repository to discover them all and we would have been able to trigger a build for each branch.
+
+Let us see this in action.
+
+1. Create a new git branch and name it `feature/jenkinspipeline-stages`
+
+2. Currently we only have the `Build` stage. Let us add another stage called `Test`. Paste the code snippet below and push the new changes to GitHub.
+
+```python
+ pipeline {
+    agent any
+
+  stages {
+    stage('Build') {
+      steps {
+        script {
+          sh 'echo "Building Stage"'
+        }
+      }
+    }
+
+    stage('Test') {
+      steps {
+        script {
+          sh 'echo "Testing Stage"'
+        }
+      }
+    }
+    }
+}
+```
+
+To make your new branch show up in Jenkins, we need to tell Jenkins to scan the repository.
+
+1. Click on the "Administration" button
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/c4857758-cabe-4d8f-8158-e2968f81077b)
+
+
+2. Navigate to the Ansible project and click on "Scan repository now"
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/70ab8f49-ee3c-4652-bdc4-7805db530246)
+
+
+3. Refresh the page and both branches will start building automatically. You can go into Blue Ocean and see both branches there too
+
+   ![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/d6f973e8-a127-4eb6-a4a6-92f4e41da52e)
+
+
+4. In Blue Ocean, you can now see how the Jenkinsfile has caused a new step in the pipeline launch build for the new branch.
+
+![image](https://github.com/rxneyo/ansible-config-mgt/assets/125794122/e03e0574-2ae4-44c5-a7d1-d576b7adcfb4)
+
+
+ ## A QUICK TASK FOR YOU!
+ 
+1. Create a pull request to merge the latest code into the main branch
+   
+2. After merging the PR, go back into your terminal and switch into the main branch.
+
+3. Pull the latest change.
+
+4. Create a new branch, add more stages into the Jenkins file to simulate below phases. (Just add an echo command like we have in build and test stages)
+ 
+   1. Package 
+
+   2. Deploy 
+
+   3. Clean up
+      
+
+6. Verify in Blue Ocean that all the stages are working, then merge your feature branch to the main branch
+
+7. Eventually, your main branch should have a successful pipeline like this in blue ocean
