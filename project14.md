@@ -696,4 +696,3 @@ sudo yum install php-xdebug
 
 I had to create a new `artifactory` role in `roles` using `ansible-galaxy role init artifactory`
 
-
