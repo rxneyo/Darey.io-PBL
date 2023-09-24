@@ -654,4 +654,46 @@ Phase 1 – Prepare Jenkins
 
 2. On you Jenkins server, install PHP, its dependencies and `Composer tool` (Feel free to do this manually at first, then update your Ansible accordingly later)
 
-   
+
+```python
+sudo yum module reset php -y
+sudo yum module enable php:remi-7.4 -y
+sudo yum install -y php php-common php-mbstring php-opcache php-
+
+intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json
+systemctl start php-fpm
+systemctl enable php-fpm
+
+#Install composer
+
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/bin/composer
+Verify Composer is installed or not
+composer --version
+
+#Install phpunit, phploc
+
+sudo dnf --enablerepo=remi install php-phpunit-phploc
+wget -O phpunit https://phar.phpunit.de/phpunit-7.phar
+chmod +x phpunit
+sudo yum install php-xdebug
+```
+
+3. Install Jenkins plugins
+
+ 1. `Plot plugin`
+
+ 2. `Artifactory plugin`
+
+> We will use plot plugin to display tests reports, and code coverage information.
+
+>The Artifactory plugin will be used to easily upload code artifacts into an Artifactory server.
+
+
+4. In Jenkins UI configure Artifactory
+
+   NB: Run the build with the ci inventory so it updates the artifactory server
+
+I had to create a new `artifactory` role in `roles` using `ansible-galaxy role init artifactory`
+
+
