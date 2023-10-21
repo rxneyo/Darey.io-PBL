@@ -629,12 +629,14 @@ pipeline {
 ...
 ```
 
-3. In the Ansible execution section, remove the hardcoded `inventory/dev` and replace with `${inventory}
+3. In the Ansible execution section, remove the hardcoded `inventory/dev` and replace with `inventory/${inventory}`
+   
 From now on, each time you hit on execute, it will expect an input
 
 Notice that the default value loads up, but we can now specify which environment we want to deploy the configuration to. Simply type `sit` and hit Run
 
 4. Add another parameter. This time, introduce `tagging` in Ansible. You can limit the Ansible execution to a specific role or playbook desired. Therefore, add an Ansible tag to run against `webserver` only. Test this locally first to get the experience. Once you understand this, update `Jenkinsfile` and run it from Jenkins.
+
 
 
 ## CI/CD PIPELINE FOR TODO APPLICATION
@@ -646,7 +648,7 @@ Our goal here is to deploy the application onto servers directly from `Artifacto
 
 
 
-Phase 1 – Prepare Jenkins
+## Phase 1 – Prepare Jenkins
 
 1. Fork the repository below into your Github account
 
@@ -690,9 +692,157 @@ sudo yum install php-xdebug
 >The Artifactory plugin will be used to easily upload code artifacts into an Artifactory server.
 
 
-4. In Jenkins UI configure Artifactory
-
    NB: Run the build with the ci inventory so it updates the artifactory server
 
 I had to create a new `artifactory` role in `roles` using `ansible-galaxy role init artifactory`
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/a989ea9b-1fd2-4895-a559-9299a7e545e6)
+
+
+   ![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/bb28e80f-a0a8-4087-a33b-a363d36534d1)
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/8858286a-645a-491e-861d-ab7e3d5ff72b)
+
+
+**To confirm to go `public-ip:8081`. Login with the default credntials 'admin' and 'password' and then change the password. Then proceed to creating a generic local repository. It is required you open both port 8081 and 8082 in your inbound rules.**
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/95187406-c467-4222-a658-d46dcd23956b)
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/62fc74ba-2ac3-4af1-9839-dfe6cf4b0f71)
+
+
+4. In Jenkins UI configure Artifactory
+
+ ![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/98e4bb23-e89c-4f95-bfcd-1c176f914c75)
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/1285ae3d-3619-44b6-abd7-646fe68cbd87)
+
+
+Create a GENERIC Repository (i named mine rxneyo). This will be used to store our build artifacts
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/8453f23d-1a91-46ba-9c85-5df04d796a54)
+
+
+## Phase 2 – Integrate Artifactory repository with Jenkins
+
+1. In VsCode, Create a dummy `Jenkinsfile` in the to-do repository
+
+2. Using Blue Ocean, create a multibranch Jenkins pipeline: Jankins dashboard > Open Blue Ocean > New Pipeline > Github > Select Repository (php-todo) > Create Pipeline > 
+
+3. On the database server, create database and user
+
+
+```python
+Create database homestead;
+CREATE USER 'homestead'@'%' IDENTIFIED BY 'sePret^i';
+GRANT ALL PRIVILEGES ON * . * TO 'homestead'@'%';
+```
+
+I used this in `mysql` roles, in the `main.yml` of the defaults
+
+```python
+# Databases.
+mysql_databases: 
+   - name: tooling
+     collation: utf8_general_ci
+     encoding: utf8
+     replicate: 1
+
+mysql_databases:
+  - name: homestead
+    collation: utf8_general_ci
+    encoding: utf8
+    replicate: 1
+
+# Users.
+mysql_users:
+  - name: webaccess
+    host: 0.0.0.0
+    password: secret
+    priv: '*.*:ALL,GRANT'
+
+mysql_users:
+  - name: homestead
+    host: db private ip
+    password: sePret^i
+    priv: '*.*:ALL,GRANT'
+```
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/5333d5f2-a842-4601-a80b-71205bf4741a)
+
+
+
+4. Update the database connectivity requirements in the file .env.sample
+
+5. Update Jenkinsfile with proper pipeline configuration
+
+```python
+pipeline {
+    agent any
+
+  stages {
+
+     stage("Initial cleanup") {
+          steps {
+            dir("${WORKSPACE}") {
+              deleteDir()
+            }
+          }
+        }
+
+    stage('Checkout SCM') {
+      steps {
+            git branch: 'main', url: '(https://github.com/rxneyo/php-todo.git)'
+      }
+    }
+
+    stage('Prepare Dependencies') {
+      steps {
+             sh 'mv .env.sample .env'
+             sh 'composer install'
+             sh 'php artisan migrate'
+             sh 'php artisan db:seed'
+             sh 'php artisan key:generate'
+      }
+    }
+  }
+}
+```
+
+
+I got an error when running the playbook. The error came up because the Jenkins Server is the client server and it is unable to reach the DB server.
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/cbba41d6-9476-4ca4-8834-22da130f543b)
+
+
+This was resolved by installing `mysql-client` on the jenkins server and updating the bind-address in the DB server:
+
+`sudo yum install mysql -y`
+
+`sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf`
+
+Set bind address to 0.0.0.0
+
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/f6d3af60-e0ae-4b82-a96c-abfbe0b3768f)
+
+
+> Update the database connectivity requirements in the file `.env.sample` file:
+
+```python
+DB_CONNECTION=mysql
+DB_PORT=3306
+```
+
+![image](https://github.com/rxneyo/DevOps_Projects/assets/125794122/e02d5111-d1e1-4a2e-a0dc-e019a3c8f287)
+
+
+
+
+
 
